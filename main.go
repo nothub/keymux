@@ -1,27 +1,30 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/MarinX/keylogger"
 	"golang.org/x/exp/slices"
 	"log"
+	"os"
+	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 )
 
 func main() {
+	delay, device, keys := settings()
 
-	delay := 100 * time.Millisecond
-	device := "/dev/input/by-id/usb-046a_0011-event-kbd"
-	keys := []string{"1", "2", "3", "4", "5"}
-
+	log.Println("Listening to keyboard", device)
 	keyboard, err := keylogger.New(device)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer func() {
 		err := keyboard.Close()
 		if err != nil {
-			log.Panic(err)
+			log.Println(err)
 		}
 	}()
 
@@ -56,4 +59,43 @@ func main() {
 		}
 	}
 
+}
+
+func settings() (time.Duration, string, []string) {
+	flag.Usage = func() {
+		infos, ok := debug.ReadBuildInfo()
+		name := infos.Main.Path + " " + infos.Main.Version
+		if !ok {
+			name = os.Args[0]
+		}
+		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s\n", name)
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	delayFlag := flag.Int("delay", 50, "keysend delay in milliseconds (min value 10)")
+	deviceFlag := flag.String("device", "/dev/input/by-id/usb-046a_0011-event-kbd", "keyboard device path")
+	keysFlag := flag.String("keys", "1,2,3,4,5", "list of 5 flask hotkeys")
+
+	flag.Parse()
+
+	delay := time.Duration(*delayFlag) * time.Millisecond
+	if delay < 10*time.Millisecond {
+		log.Println("Invalid argument", "delay")
+		flag.Usage()
+	}
+
+	device := *deviceFlag
+	if len(device) == 0 {
+		log.Println("Invalid argument", "device")
+		flag.Usage()
+	}
+
+	keys := strings.Split(*keysFlag, ",")
+	if len(keys) != 5 {
+		log.Println("Invalid argument", "keys")
+		flag.Usage()
+	}
+
+	return delay, device, keys
 }
