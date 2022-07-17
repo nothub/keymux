@@ -1,0 +1,5 @@
+prio 1 - toggle pause hotkey
+prio 1 - detect active window
+prio 2 - on screen display
+prio 3 - cv ocr read health / mana
+prio 3 - memory read health / mana
