@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"golang.org/x/exp/slices"
 	"log"
 	"os"
+	"os/exec"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -17,54 +19,91 @@ import (
 func main() {
 	delay, device, keys := settings()
 
-	log.Println("Listening to keyboard", device)
-	keyboard, err := keylogger.New(device)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		err := keyboard.Close()
-		if err != nil {
-			log.Println(err)
-		}
-	}()
+	// TODO: replace shutdown callbacks with channels
+	keyboard, shutdownKeyboard := keyboardAttach(device)
+	defer shutdownKeyboard()
+	notify, shutdownNotify := notifyInit()
+	defer shutdownNotify()
 
-	notify := notifyInit()
 	notify("Flask Multiplexer", IconOn)
 
 	events := keyboard.Read()
 	mutex := sync.Mutex{}
 	for event := range events {
+		// filter for keyboard events
 		if event.Type != keylogger.EvKey {
 			continue
 		}
+		// filter for key pressed down
 		if !event.KeyPress() {
 			continue
 		}
-		if slices.Contains(keys, event.KeyString()) {
-			if !mutex.TryLock() {
+		// filter flask hotkeys
+		// TODO: else if pause hotkey
+		if !slices.Contains(keys, event.KeyString()) {
+			continue
+		}
+		// check active window
+		if activeWindow() != "Path of Exile" {
+			continue
+		}
+		// begin key multiplex
+		if !mutex.TryLock() {
+			continue
+		}
+		log.Printf("flask key pressed: %v", event.KeyString())
+		for _, key := range keys {
+			if key == event.KeyString() {
 				continue
 			}
-			log.Printf("flask key pressed: %v", event.KeyString())
-			for _, key := range keys {
-				if key == event.KeyString() {
-					continue
-				}
-				err := keyboard.WriteOnce(key)
-				if err != nil {
-					log.Println(err)
-				}
-				time.Sleep(delay)
+			err := keyboard.WriteOnce(key)
+			if err != nil {
+				log.Println(err)
 			}
-			go func() {
-				time.Sleep(delay)
-				mutex.Unlock()
-			}()
+			time.Sleep(delay)
 		}
+		// ignore events until delay awaited
+		go func() {
+			time.Sleep(delay)
+			mutex.Unlock()
+		}()
 	}
 
 	notify("Flask Multiplexer", IconOff)
 
+}
+
+func keyboardAttach(device string) (*keylogger.KeyLogger, func()) {
+	log.Println("Listening to keyboard", device)
+	keyboard, err := keylogger.New(device)
+	if err != nil {
+		log.Fatal(err)
+	}
+	shutdownFunc := func() {
+		err := keyboard.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return keyboard, shutdownFunc
+}
+
+func activeWindow() string {
+	cmd := exec.Command("xdotool", "getwindowfocus", "getwindowname") // TODO: do this without xdotool
+	var stdOut bytes.Buffer
+	cmd.Stdout = &stdOut
+	var stdErr bytes.Buffer
+	cmd.Stderr = &stdErr
+	err := cmd.Run()
+	stdErrTrim := strings.Trim(stdErr.String(), " \n")
+	if len(stdErrTrim) > 0 {
+		log.Println("stderr:", stdErrTrim)
+	}
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	return strings.Trim(stdOut.String(), " \n")
 }
 
 func settings() (time.Duration, string, []string) {

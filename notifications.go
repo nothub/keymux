@@ -33,13 +33,19 @@ func dbusConnect() (*dbus.Conn, error) {
 	return dbusConn, nil
 }
 
-func notifyInit() func(message string, icon dbusIcon) {
+func notifyInit() (func(message string, icon dbusIcon), func()) {
 	dbusConn, err := dbusConnect()
+	shutdownFunc := func() {
+		err = dbusConn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 	if err != nil {
 		log.Println(err)
 		return func(message string, icon dbusIcon) {
 			log.Println(message)
-		}
+		}, shutdownFunc
 	}
 	return func(message string, icon dbusIcon) {
 		_, err := notify.SendNotification(dbusConn, notify.Notification{
@@ -51,5 +57,5 @@ func notifyInit() func(message string, icon dbusIcon) {
 		if err != nil {
 			log.Println(err)
 		}
-	}
+	}, shutdownFunc
 }
