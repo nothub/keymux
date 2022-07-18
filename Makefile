@@ -1,11 +1,11 @@
-EXENAME = $(shell go list -m)
 GOFLAGS = -race
+MODNAME = $(shell go list -m)
 
-build: clean lint
-	go build $(GOFLAGS) -o $(EXENAME)
+$(MODNAME): clean lint
+	go build $(GOFLAGS) -o $@
 
-run: build
-	sudo ./$(EXENAME)
+run: $(MODNAME)
+	sudo ./$(MODNAME)
 
 clean:
 	go clean
@@ -14,4 +14,4 @@ clean:
 lint:
 	go vet
 
-.PHONY: build run clean lint
+.PHONY: run clean lint
