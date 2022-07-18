@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/MarinX/keylogger"
 	"golang.org/x/exp/slices"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/MarinX/keylogger"
 )
 
 func main() {
@@ -27,6 +28,9 @@ func main() {
 			log.Println(err)
 		}
 	}()
+
+	notify := notifyInit()
+	notify("Flask Multiplexer", IconOn)
 
 	events := keyboard.Read()
 	mutex := sync.Mutex{}
@@ -58,6 +62,8 @@ func main() {
 			}()
 		}
 	}
+
+	notify("Flask Multiplexer", IconOff)
 
 }
 
