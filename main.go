@@ -18,6 +18,8 @@ var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 var pause = false
 
 func main() {
+	log.SetFlags(log.Lmicroseconds)
+
 	delay, device, keys, pauseKey, window := parseFlags()
 
 	// attach to x11 session
@@ -57,7 +59,11 @@ func main() {
 
 		if event.KeyString() == pauseKey {
 			pause = !pause
-			log.Printf("paused: %v\n", pause)
+			if pause {
+				log.Println("paused")
+			} else {
+				log.Println("unpaused")
+			}
 			continue
 		}
 
@@ -80,20 +86,22 @@ func main() {
 			continue
 		}
 
-		log.Printf("hotkey: %v\n", event.KeyString())
+		log.Printf("hotkey:%3v\n", event.KeyString())
 		for _, key := range keys {
 			// skip key that was already pressed by user
 			if key == event.KeyString() {
 				continue
 			}
 
+			// await delay
+			time.Sleep(delay())
+
 			// simulate key press
+			log.Printf("sending:%2v\n", key)
 			err := kbd.WriteOnce(key)
 			if err != nil {
 				log.Println(err)
 			}
-
-			time.Sleep(delay())
 		}
 
 		// ignore events until delay awaited
@@ -118,18 +126,18 @@ func parseFlags() (func() time.Duration, string, []string, string, string) {
 
 	keys := strings.Split(*keysFlag, ",")
 	if len(keys) < 2 {
-		log.Printf("Invalid keys argument: %q\n", keys)
+		log.Printf("invalid keys argument: %q\n", keys)
 		flag.Usage()
 	}
 
 	if len(*keyPauseFlag) < 1 {
-		log.Printf("Invalid key-pause argument: %q\n", *keyPauseFlag)
+		log.Printf("invalid key-pause argument: %q\n", *keyPauseFlag)
 		flag.Usage()
 	}
 
 	delay := time.Duration(*delayFlag) * time.Millisecond
 	if delay < 10*time.Millisecond {
-		log.Printf("Invalid delay argument: %q\n", delay)
+		log.Printf("invalid delay argument: %q\n", delay)
 		flag.Usage()
 	}
 
@@ -143,6 +151,8 @@ func parseFlags() (func() time.Duration, string, []string, string, string) {
 		n = n + random.Int63n(delayRand.Nanoseconds())
 		return time.Duration(n)
 	}
+
+	log.Printf("options: keys=%q key-pause=%q device=%q window=%q delay=%q delay-random=%q \n", keys, *keyPauseFlag, *deviceFlag, *windowFlag, delay, delayRand)
 
 	return delayFunc, *deviceFlag, keys, *keyPauseFlag, *windowFlag
 }
