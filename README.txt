@@ -1,4 +1,4 @@
-keymux v0.2.0
+keymux v0.2.1
 
 Multiplex multiple keyboard inputs with a single keypress.
 Given a set of keys, if any key is pressed, keymux will simulate the presses of the other keys.
