@@ -4,7 +4,7 @@ VERSION  = $(shell git describe --tags --abbrev=0 --match v[0-9]* 2> /dev/null)
 LDFLAGS  = -ldflags="-X '$(MOD_NAME)/buildinfo.Version=$(VERSION)'"
 GOFLAGS = -race
 
-out/$(BIN_NAME): $(shell ls go.mod go.sum **/*.go)
+out/$(BIN_NAME): $(shell ls go.mod go.sum *.go **/*.go)
 	go build $(LDFLAGS) $(GOFLAGS) -o $@
 
 README.txt: out/$(BIN_NAME)
