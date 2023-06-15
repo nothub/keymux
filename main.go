@@ -55,7 +55,7 @@ func main() {
 
 		if event.KeyString() == pauseKey {
 			pause = !pause
-			log.Printf("pause: %v\n", pause)
+			log.Printf("paused: %v\n", pause)
 			continue
 		}
 
@@ -63,7 +63,7 @@ func main() {
 			continue
 		}
 
-		// filter flask hotkeys
+		// filter hotkeys
 		if !slices.Contains(keys, event.KeyString()) {
 			continue
 		}
@@ -78,7 +78,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("key pressed: %v\n", event.KeyString())
+		log.Printf("hotkey: %v\n", event.KeyString())
 		for _, key := range keys {
 			if key == event.KeyString() {
 				continue
@@ -148,10 +148,10 @@ func printUsage() {
 		"Given a set of keys, if any key is pressed, keymux will simulate the presses of the other keys.\n" +
 		"\n" +
 		"Usage:\n" +
-		"  keymux --keys \"a,b,x\"\n" +
+		"  keymux --keys   \"a,b,x\"\n" +
 		"  keymux --device \"/dev/input/by-id/usb-042-event-kbd\"\n" +
 		"  keymux --window \"Path of Exile\"\n" +
-		"  keymux --delay 50 --delay-random 30\n" +
+		"  keymux --delay 70 --delay-random 30\n" +
 		"\n" +
 		"Options:\n" +
 		"  --keys=<keys>\n" +

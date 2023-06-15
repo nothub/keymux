@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/xproto"
 	"log"
@@ -44,7 +43,6 @@ func activeWindow() string {
 		log.Fatal(err)
 	}
 	windowId := xproto.Window(xgb.Get32(reply.Value))
-	fmt.Printf("Active window id: %X\n", windowId)
 
 	// Now get the value of _NET_WM_NAME for the active window.
 	// Note that this time, we simply convert the resulting byte slice,

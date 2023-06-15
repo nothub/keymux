@@ -4,10 +4,10 @@ Multiplex multiple keyboard inputs with a single keypress.
 Given a set of keys, if any key is pressed, keymux will simulate the presses of the other keys.
 
 Usage:
-  keymux --keys "a,b,x"
+  keymux --keys   "a,b,x"
   keymux --device "/dev/input/by-id/usb-042-event-kbd"
   keymux --window "Path of Exile"
-  keymux --delay 50 --delay-random 30
+  keymux --delay 70 --delay-random 30
 
 Options:
   --keys=<keys>
