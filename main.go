@@ -20,6 +20,7 @@ var pause = false
 func main() {
 	delay, device, keys, pauseKey, window := parseFlags()
 
+	// attach to x11 session
 	{
 		con, err := xgb.NewConn()
 		if err != nil {
@@ -31,6 +32,7 @@ func main() {
 		}()
 	}
 
+	// attach to keyboard
 	kbd := kbdAttach(device)
 	defer func() {
 		err := kbd.Close()
@@ -80,13 +82,17 @@ func main() {
 
 		log.Printf("hotkey: %v\n", event.KeyString())
 		for _, key := range keys {
+			// skip key that was already pressed by user
 			if key == event.KeyString() {
 				continue
 			}
+
+			// simulate key press
 			err := kbd.WriteOnce(key)
 			if err != nil {
 				log.Println(err)
 			}
+
 			time.Sleep(delay())
 		}
 
@@ -144,28 +150,29 @@ func parseFlags() (func() time.Duration, string, []string, string, string) {
 func printUsage() {
 	fmt.Print("keymux " + buildinfo.Version + "\n" +
 		"\n" +
-		"Multiplex multiple keyboard inputs with a single keypress.\n" +
-		"Given a set of keys, if any key is pressed, keymux will simulate the presses of the other keys.\n" +
+		"Multiplex multiple keyboard inputs with a single key press.\n" +
+		"Given a set of keys, if any key is pressed keymux will\n" +
+		"simulate the presses of the other keys in the set.\n" +
 		"\n" +
 		"Usage:\n" +
-		"  keymux --keys   \"a,b,x\"\n" +
+		"  keymux --keys \"a,b,x\"\n" +
 		"  keymux --device \"/dev/input/by-id/usb-042-event-kbd\"\n" +
 		"  keymux --window \"Path of Exile\"\n" +
 		"  keymux --delay 70 --delay-random 30\n" +
 		"\n" +
 		"Options:\n" +
 		"  --keys=<keys>\n" +
-		"      List of hotkeys to monitor and send. (default: \"1,2,3,4,5\")\n" +
+		"      List of hotkeys to monitor and send (default: \"1,2,3,4,5\").\n" +
 		"  --key-pause=<key>\n" +
-		"      Hotkey for pausing execution. (default: \"Pause\")\n" +
+		"      Hotkey for pausing execution (default: \"Pause\").\n" +
 		"  --device=<path>\n" +
-		"      Keyboard device path. (omit for auto search)\n" +
+		"      Keyboard device path (omit for auto search).\n" +
 		"  --window=<name>\n" +
-		"      Restrict input to specific window. (omit to disable)\n" +
+		"      Restrict input to specific window (omit to disable).\n" +
 		"  --delay=<ms>\n" +
-		"      Keysend delay in milliseconds. (default: 50)\n" +
+		"      Keysend delay in milliseconds (default: 50).\n" +
 		"  --delay-random=<ms>\n" +
-		"      Additional random keysend delay. (default: 25)\n" +
+		"      Additional random keysend delay (default: 25).\n" +
 		"  -h --help\n" +
 		"      Print help message and exit.\n")
 }
