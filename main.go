@@ -86,7 +86,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("hotkey:%3v\n", event.KeyString())
+		log.Printf("hotkey:  %v\n", event.KeyString())
 		for _, key := range keys {
 			// skip key that was already pressed by user
 			if key == event.KeyString() {
@@ -97,7 +97,7 @@ func main() {
 			time.Sleep(delay())
 
 			// simulate key press
-			log.Printf("sending:%2v\n", key)
+			log.Printf("sending: %v\n", key)
 			err := kbd.WriteOnce(key)
 			if err != nil {
 				log.Println(err)
