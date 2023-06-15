@@ -1,4 +1,4 @@
-keymux 
+keymux v0.2.0
 
 Multiplex multiple keyboard inputs with a single keypress.
 Given a set of keys, if any key is pressed, keymux will simulate the presses of the other keys.
@@ -12,6 +12,8 @@ Usage:
 Options:
   --keys=<keys>
       List of hotkeys to monitor and send. (default: "1,2,3,4,5")
+  --key-pause=<key>
+      Hotkey for pausing execution. (default: "Pause")
   --device=<path>
       Keyboard device path. (omit for auto search)
   --window=<name>

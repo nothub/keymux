@@ -15,9 +15,10 @@ import (
 )
 
 var random = rand.New(rand.NewSource(time.Now().UnixNano()))
+var pause = false
 
 func main() {
-	delay, device, keys, window := parseFlags()
+	delay, device, keys, pauseKey, window := parseFlags()
 
 	{
 		con, err := xgb.NewConn()
@@ -52,8 +53,17 @@ func main() {
 			continue
 		}
 
+		if event.KeyString() == pauseKey {
+			pause = !pause
+			log.Printf("pause: %v\n", pause)
+			continue
+		}
+
+		if pause {
+			continue
+		}
+
 		// filter flask hotkeys
-		// TODO: else if pause hotkey
 		if !slices.Contains(keys, event.KeyString()) {
 			continue
 		}
@@ -68,7 +78,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("key pressed: %v", event.KeyString())
+		log.Printf("key pressed: %v\n", event.KeyString())
 		for _, key := range keys {
 			if key == event.KeyString() {
 				continue
@@ -88,10 +98,11 @@ func main() {
 	}
 }
 
-func parseFlags() (func() time.Duration, string, []string, string) {
+func parseFlags() (func() time.Duration, string, []string, string, string) {
 	flag.Usage = printUsage
 
 	keysFlag := flag.String("keys", "1,2,3,4,5", "")
+	keyPauseFlag := flag.String("key-pause", "Pause", "")
 	deviceFlag := flag.String("device", "", "")
 	windowFlag := flag.String("window", "", "")
 	delayFlag := flag.Int("delay", 50, "")
@@ -102,6 +113,11 @@ func parseFlags() (func() time.Duration, string, []string, string) {
 	keys := strings.Split(*keysFlag, ",")
 	if len(keys) < 2 {
 		log.Printf("Invalid keys argument: %q\n", keys)
+		flag.Usage()
+	}
+
+	if len(*keyPauseFlag) < 1 {
+		log.Printf("Invalid key-pause argument: %q\n", *keyPauseFlag)
 		flag.Usage()
 	}
 
@@ -122,7 +138,7 @@ func parseFlags() (func() time.Duration, string, []string, string) {
 		return time.Duration(n)
 	}
 
-	return delayFunc, *deviceFlag, keys, *windowFlag
+	return delayFunc, *deviceFlag, keys, *keyPauseFlag, *windowFlag
 }
 
 func printUsage() {
@@ -140,6 +156,8 @@ func printUsage() {
 		"Options:\n" +
 		"  --keys=<keys>\n" +
 		"      List of hotkeys to monitor and send. (default: \"1,2,3,4,5\")\n" +
+		"  --key-pause=<key>\n" +
+		"      Hotkey for pausing execution. (default: \"Pause\")\n" +
 		"  --device=<path>\n" +
 		"      Keyboard device path. (omit for auto search)\n" +
 		"  --window=<name>\n" +
